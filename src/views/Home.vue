@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <div>
+    <div class="imgcontent">
       <img :src="markedImg" />
       <el-button @click="onPickFile">选择图片</el-button>
       <input
@@ -15,6 +15,7 @@
       <el-input v-model="markedText" placeholder="请输入内容"></el-input>
     </div>
     <div class="fontstyle">
+      <span>字体 / 颜色：</span>
       <el-select v-model="markedFont" placeholder="请选择">
         <el-option
           v-for="item in options"
@@ -29,18 +30,18 @@
     <div class="other">
       <div class="block">
         <span class="demonstration">透明度</span>
-        <el-slider v-model="markedAlpha" show-input></el-slider>
+        <el-slider v-model="markedAlpha"></el-slider>
       </div>
       <div class="block">
         <span class="demonstration">字体大小</span>
-        <el-slider v-model="markedSize" show-input></el-slider>
+        <el-slider v-model="markedSize"></el-slider>
       </div>
       <div class="block">
         <span class="demonstration">角度</span>
-        <el-slider v-model="markedRotate" show-input :min="0" :max="90"></el-slider>
+        <el-slider v-model="markedRotate" :min="0" :max="90"></el-slider>
       </div>
     </div>
-    <div>
+    <div class="save">
       <el-button @click="__markWater">添加水印</el-button>
       <el-button>保存图片</el-button>
     </div>
@@ -150,24 +151,24 @@ export default {
     },
   },
   watch: {
-    markedRotate: function () {
-      this.__markWater();
-    },
-    markedText: function () {
-      this.__markWater();
-    },
-    markedColor: function () {
-      this.__markWater();
-    },
-    markedSize: function () {
-      this.__markWater();
-    },
-    markedAlpha: function () {
-      this.__markWater();
-    },
-    markedFont: function () {
-      this.__markWater();
-    },
+    // markedRotate: function () {
+    //   this.__markWater();
+    // },
+    // markedText: function () {
+    //   this.__markWater();
+    // },
+    // markedColor: function () {
+    //   this.__markWater();
+    // },
+    // markedSize: function () {
+    //   this.__markWater();
+    // },
+    // markedAlpha: function () {
+    //   this.__markWater();
+    // },
+    // markedFont: function () {
+    //   this.__markWater();
+    // },
   },
   created() {
     this.__markWater();
@@ -185,17 +186,92 @@ export default {
 
 <style lang="scss" scoped>
 .home {
-  width: 600px;
-  // display: flex;
-  // align-items: center;
-  // justify-content: center;
-  // flex-direction: column;
-  img {
-    width: 500px;
-    display: block;
+  // width: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  .imgcontent {
+    img {
+      width: 500px;
+      display: block;
+    }
+    .el-button {
+      margin-top: 20px;
+    }
+  }
+
+  .text {
+    width: 650px;
+    margin-top: 20px;
+    .el-input {
+      width: 80%;
+    }
+  }
+  .fontstyle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 650px;
+    margin-top: 20px;
+    span {
+      font-size: 14px;
+      color: #8492a6;
+      line-height: 44px;
+    }
+    .el-select {
+      width: 40%;
+      margin: 0 20px;
+    }
   }
   .other {
-    width: 100%;
+    width: 650px;
+    border-top: 1px solid #eff2f6;
+    border-right: 1px solid #eff2f6;
+    border-left: 1px solid #eff2f6;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    .block {
+      padding: 20px 10px;
+      overflow: hidden;
+      border-bottom: 1px solid #eff2f6;
+      .demonstration {
+        font-size: 14px;
+        color: #8492a6;
+        line-height: 44px;
+      }
+      .demonstration + .el-slider {
+        float: right;
+        width: 70%;
+        margin-right: 20px;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 750px) {
+  .home {
+    // width: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    .imgcontent {
+      img {
+        width: 100%;
+        display: block;
+      }
+    }
+
+    .text {
+      width: 100%;
+    }
+    .fontstyle {
+      width: 100%;
+    }
+    .other {
+      width: 100%;
+    }
   }
 }
 </style>
