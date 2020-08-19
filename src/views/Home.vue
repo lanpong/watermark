@@ -1,15 +1,19 @@
 <template>
   <div class="home">
-    <img :src="markedImg" />
-    <div>保存</div>
-    <button @click="onPickFile">选择图片</button>
-    <input
-      type="file"
-      ref="fileInput"
-      accept="image/*"
-      @change="handleImgChange"
-      style="display: none"
-    />
+    <div>
+      <img :src="markedImg" />
+      <el-button @click="onPickFile">选择图片</el-button>
+      <input
+        type="file"
+        ref="fileInput"
+        accept="image/*"
+        @change="handleImgChange"
+        style="display: none"
+      />
+    </div>
+    <div class="text">
+      <el-input v-model="markedText" placeholder="请输入内容"></el-input>
+    </div>
     <div class="fontstyle">
       <el-select v-model="markedFont" placeholder="请选择">
         <el-option
@@ -19,9 +23,9 @@
           :value="item.markedFont"
         ></el-option>
       </el-select>
+      <el-color-picker v-model="markedColor" :predefine="predefineColors"></el-color-picker>
     </div>
-    <el-input v-model="markedText" placeholder="请输入内容"></el-input>
-    <el-color-picker v-model="markedColor" :predefine="predefineColors"></el-color-picker>
+
     <div class="other">
       <div class="block">
         <span class="demonstration">透明度</span>
@@ -36,7 +40,10 @@
         <el-slider v-model="markedRotate" show-input :min="0" :max="90"></el-slider>
       </div>
     </div>
-    <el-button @click="__markWater">添加水印</el-button>
+    <div>
+      <el-button @click="__markWater">添加水印</el-button>
+      <el-button>保存图片</el-button>
+    </div>
   </div>
 </template>
 
@@ -141,6 +148,29 @@ export default {
 
       return target;
     },
+  },
+  watch: {
+    markedRotate: function () {
+      this.__markWater();
+    },
+    markedText: function () {
+      this.__markWater();
+    },
+    markedColor: function () {
+      this.__markWater();
+    },
+    markedSize: function () {
+      this.__markWater();
+    },
+    markedAlpha: function () {
+      this.__markWater();
+    },
+    markedFont: function () {
+      this.__markWater();
+    },
+  },
+  created() {
+    this.__markWater();
   },
   components: {
     [Select.name]: Select,
