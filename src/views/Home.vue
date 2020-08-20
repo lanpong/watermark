@@ -71,7 +71,7 @@ export default {
       markedAlpha: 50, // 透明度
       markedColor: "#ffffff", // 颜色
       markedSize: 24, // 字号
-      markedText: "这是一个小水印", // 内容
+      markedText: "仅用于xxxxx使用", // 内容
       markedRotate: 45, // 角度
       // markedFont: "Arial",
       predefineColors: [
@@ -165,7 +165,7 @@ export default {
       const isAndroid = u.indexOf("Android") > -1 || u.indexOf("Adr") > -1; // ios设备
 
       if (isIos || isAndroid) {
-        Message.success("长按图片保存到手机相册！")
+        Message.info("长按图片保存到手机相册！")
         return false;
       } else if (window.navigator.msSaveOrOpenBlob) {
         let bstr = atob(imgUrl.split(",")[1]);
@@ -222,7 +222,6 @@ export default {
 
 <style lang="scss" scoped>
 .home {
-  // width: 600px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -287,11 +286,6 @@ export default {
 
 @media screen and (max-width: 750px) {
   .home {
-    // width: 600px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
     .imgcontent {
       img {
         width: 100%;

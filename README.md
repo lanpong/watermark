@@ -1,6 +1,10 @@
 # watermark
 
-## 使用 / 预览
+一个前端实现的证件水印程序。
+
+## 使用
+
+访问 [watermark](https://0x0ffff.github.io/watermark/) 即可使用。
 
 ## 构建
 
@@ -23,3 +27,7 @@ npm run serve
 ## 图片下载
 
 > 实现参考 https://segmentfault.com/a/1190000016388897
+
+## 参考
+
+> https://github.com/ruter/watermarker
