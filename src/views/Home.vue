@@ -43,7 +43,7 @@
     </div>
     <div class="save">
       <el-button @click="__markWater">添加水印</el-button>
-      <el-button>保存图片</el-button>
+      <el-button @click="__download">保存图片</el-button>
     </div>
   </div>
 </template>
@@ -52,7 +52,15 @@
 import defaultpng from "../assets/default.png";
 import Watermark from "watermarkjs";
 
-import { Select, Option, Input, Slider, ColorPicker, Button } from "element-ui";
+import {
+  Select,
+  Option,
+  Input,
+  Slider,
+  ColorPicker,
+  Button,
+  Message,
+} from "element-ui";
 
 export default {
   name: "home",
@@ -148,6 +156,34 @@ export default {
       }
 
       return target;
+    },
+    __download() {
+      const imgUrl = this.markedImg;
+
+      const u = navigator.userAgent; // 获取浏览器的 userAgent
+      const isIos = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); // Android设备
+      const isAndroid = u.indexOf("Android") > -1 || u.indexOf("Adr") > -1; // ios设备
+
+      if (isIos || isAndroid) {
+        Message.success("长按图片保存到手机相册！")
+        return false;
+      } else if (window.navigator.msSaveOrOpenBlob) {
+        let bstr = atob(imgUrl.split(",")[1]);
+        let n = bstr.length;
+        let u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+
+        let blob = new Blob([u8arr]);
+
+        window.navigator.msSaveOrOpenBlob(blob, "download" + "." + "png");
+      } else {
+        const a = document.createElement("a");
+        a.href = imgUrl;
+        a.setAttribute("download", "download");
+        a.click();
+      }
     },
   },
   watch: {
