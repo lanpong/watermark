@@ -1,24 +1,7 @@
 # watermark
 
-## Project setup
-```
-npm install
-```
+## 
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+## 图片下载
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+> 实现参考 https://segmentfault.com/a/1190000016388897
