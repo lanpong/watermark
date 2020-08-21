@@ -2,6 +2,8 @@
 
 一个前端实现的证件水印程序。
 
+![image.png](https://i.loli.net/2020/08/21/8ryMwgKUCLsSxfE.png)
+
 ## 使用
 
 访问 [watermark](https://0x0ffff.github.io/watermark/) 即可使用。

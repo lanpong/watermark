@@ -40,9 +40,22 @@
         <span class="demonstration">角度</span>
         <el-slider v-model="markedRotate" :min="0" :max="90"></el-slider>
       </div>
+      <div class="block">
+        <span class="demonstration">保存类型</span>
+        <div class="el-slider" style="text-align: left;">
+          <el-select v-model="downloadExtType" placeholder="请选择">
+            <el-option
+              v-for="item in downloadExtTypeList"
+              :key="item"
+              :label="item"
+              :value="item">
+            </el-option>
+          </el-select>
+        </div>
+      </div>
     </div>
     <div class="save">
-      <el-button @click="__markWater">添加水印</el-button>
+      <!-- <el-button @click="__markWater">添加水印</el-button> -->
       <el-button @click="__download">保存图片</el-button>
     </div>
   </div>
@@ -51,6 +64,7 @@
 <script>
 import defaultpng from "../assets/default.png";
 import Watermark from "watermarkjs";
+import download from '@/utils/download'
 
 import {
   Select,
@@ -73,6 +87,11 @@ export default {
       markedSize: 24, // 字号
       markedText: "仅用于xxxxx使用", // 内容
       markedRotate: 45, // 角度
+      downloadExtType: "png", // 下载的格式
+      downloadExtTypeList: [
+        "png",
+        "jpg"
+      ],
       // markedFont: "Arial",
       predefineColors: [
         "#ffffff",
@@ -121,15 +140,17 @@ export default {
       reader.onload = (arg) => {
         this.markedImg = arg.target.result;
         this.orginImg = arg.target.result;
+        this.__markWater()
       };
     },
-    __markWater() {
-      Watermark([this.orginImg])
-        .image(this.__handleText)
-        .render()
-        .then((img) => {
-          this.markedImg = img[0].src;
-        });
+    async __markWater() {
+      try {
+        // console.log("handle change", (new Date).toTimeString())
+        const imgs = await Watermark([this.orginImg]).image(this.__handleText).render()
+        this.markedImg = imgs[0].src
+      } catch (error) {
+        throw new Error(error)
+      }
     },
     __handleText(target) {
       let context = target.getContext("2d");
@@ -176,35 +197,37 @@ export default {
         }
 
         let blob = new Blob([u8arr]);
-
-        window.navigator.msSaveOrOpenBlob(blob, "download" + "." + "png");
+        const saveFileName = "download" + "." + "jpg"
+        window.navigator.msSaveOrOpenBlob(blob, saveFileName);
       } else {
-        const a = document.createElement("a");
-        a.href = imgUrl;
-        a.setAttribute("download", "download");
-        a.click();
+        try {
+          const type = this.downloadExtType
+          download(imgUrl, `download.${ type }`, `image/${ type }`)
+        } catch (error) {
+          throw new Error(error)
+        }
       }
     },
   },
   watch: {
-    // markedRotate: function () {
-    //   this.__markWater();
-    // },
-    // markedText: function () {
-    //   this.__markWater();
-    // },
-    // markedColor: function () {
-    //   this.__markWater();
-    // },
-    // markedSize: function () {
-    //   this.__markWater();
-    // },
-    // markedAlpha: function () {
-    //   this.__markWater();
-    // },
-    // markedFont: function () {
-    //   this.__markWater();
-    // },
+    markedRotate: function () {
+      this.__markWater();
+    },
+    markedText: function () {
+      this.__markWater();
+    },
+    markedColor: function () {
+      this.__markWater();
+    },
+    markedSize: function () {
+      this.__markWater();
+    },
+    markedAlpha: function () {
+      this.__markWater();
+    },
+    markedFont: function () {
+      this.__markWater();
+    },
   },
   created() {
     this.__markWater();
