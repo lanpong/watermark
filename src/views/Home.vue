@@ -41,15 +41,14 @@
         <el-slider v-model="markedRotate" :min="0" :max="90"></el-slider>
       </div>
       <div class="block">
+        <span class="demonstration">间隔</span>
+        <el-slider v-model="markedGap" :min="32" :max="100"></el-slider>
+      </div>
+      <div class="block">
         <span class="demonstration">保存类型</span>
         <div class="el-slider" style="text-align: left;">
           <el-select v-model="downloadExtType" placeholder="请选择">
-            <el-option
-              v-for="item in downloadExtTypeList"
-              :key="item"
-              :label="item"
-              :value="item">
-            </el-option>
+            <el-option v-for="item in downloadExtTypeList" :key="item" :label="item" :value="item"></el-option>
           </el-select>
         </div>
       </div>
@@ -64,7 +63,7 @@
 <script>
 import defaultpng from "../assets/default.png";
 import Watermark from "watermarkjs";
-import download from '@/utils/download'
+import download from "@/utils/download";
 
 import {
   Select,
@@ -87,11 +86,9 @@ export default {
       markedSize: 24, // 字号
       markedText: "仅用于xxxxx使用", // 内容
       markedRotate: 45, // 角度
+      markedGap: 32, // 间隔
       downloadExtType: "png", // 下载的格式
-      downloadExtTypeList: [
-        "png",
-        "jpg"
-      ],
+      downloadExtTypeList: ["png", "jpg"],
       // markedFont: "Arial",
       predefineColors: [
         "#000000",
@@ -139,16 +136,18 @@ export default {
       reader.onload = (arg) => {
         this.markedImg = arg.target.result;
         this.orginImg = arg.target.result;
-        this.__markWater()
+        this.__markWater();
       };
     },
     async __markWater() {
       try {
         // console.log("handle change", (new Date).toTimeString())
-        const imgs = await Watermark([this.orginImg]).image(this.__handleText).render()
-        this.markedImg = imgs[0].src
+        const imgs = await Watermark([this.orginImg])
+          .image(this.__handleText)
+          .render();
+        this.markedImg = imgs[0].src;
       } catch (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
     },
     __handleText(target) {
@@ -163,7 +162,7 @@ export default {
       let x = 0;
       let y = target.height;
 
-      const gap = 32;
+      // const gap = 32;
 
       context.globalAlpha = this.markedAlpha / 100;
       context.fillStyle = this.markedColor;
@@ -171,7 +170,7 @@ export default {
       context.rotate((rotate * Math.PI) / 180);
 
       for (let i = 0; i < 200; i++) {
-        y = y - gap * 3;
+        y = y - this.markedGap * 3;
         context.fillText(text, x, y);
       }
 
@@ -185,7 +184,7 @@ export default {
       const isAndroid = u.indexOf("Android") > -1 || u.indexOf("Adr") > -1; // ios设备
 
       if (isIos || isAndroid) {
-        Message.info("长按图片保存到手机相册！")
+        Message.info("长按图片保存到手机相册！");
         return false;
       } else if (window.navigator.msSaveOrOpenBlob) {
         let bstr = atob(imgUrl.split(",")[1]);
@@ -196,14 +195,14 @@ export default {
         }
 
         let blob = new Blob([u8arr]);
-        const saveFileName = "download" + "." + "jpg"
+        const saveFileName = "download" + "." + "jpg";
         window.navigator.msSaveOrOpenBlob(blob, saveFileName);
       } else {
         try {
-          const type = this.downloadExtType
-          download(imgUrl, `download.${ type }`, `image/${ type }`)
+          const type = this.downloadExtType;
+          download(imgUrl, `download.${type}`, `image/${type}`);
         } catch (error) {
-          throw new Error(error)
+          throw new Error(error);
         }
       }
     },
@@ -225,6 +224,9 @@ export default {
       this.__markWater();
     },
     markedFont: function () {
+      this.__markWater();
+    },
+    markedGap: function () {
       this.__markWater();
     },
   },
