@@ -94,12 +94,11 @@ export default {
       ],
       // markedFont: "Arial",
       predefineColors: [
+        "#000000",
         "#ffffff",
         "#ff4500",
         "#ff8c00",
         "#ffd700",
-        "#90ee90",
-        "#00ced1",
         "#1e90ff",
         "#c71585",
       ],
