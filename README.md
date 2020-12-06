@@ -33,3 +33,6 @@ npm run serve
 ## 参考
 
 > https://github.com/ruter/watermarker
+
+## TODO
+- React 重构。
