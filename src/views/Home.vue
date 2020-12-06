@@ -12,7 +12,7 @@
       />
     </div>
     <div class="text">
-      <el-input v-model="markedText" placeholder="请输入内容"></el-input>
+      <el-input v-model="markedText" placeholder="请输入内容" @input="__marked"></el-input>
     </div>
     <div class="fontstyle">
       <span>字体 / 颜色：</span>
@@ -24,25 +24,25 @@
           :value="item.markedFont"
         ></el-option>
       </el-select>
-      <el-color-picker v-model="markedColor" :predefine="predefineColors"></el-color-picker>
+      <el-color-picker v-model="markedColor" :predefine="predefineColors" @change="__marked"></el-color-picker>
     </div>
 
     <div class="other">
       <div class="block">
         <span class="demonstration">透明度</span>
-        <el-slider v-model="markedAlpha"></el-slider>
+        <el-slider v-model="markedAlpha" @change="__marked"></el-slider>
       </div>
       <div class="block">
         <span class="demonstration">字体大小</span>
-        <el-slider v-model="markedSize"></el-slider>
+        <el-slider v-model="markedSize" @change="__marked"></el-slider>
       </div>
       <div class="block">
         <span class="demonstration">角度</span>
-        <el-slider v-model="markedRotate" :min="0" :max="90"></el-slider>
+        <el-slider v-model="markedRotate" :min="0" :max="90" @change="__marked"></el-slider>
       </div>
       <div class="block">
         <span class="demonstration">间隔</span>
-        <el-slider v-model="markedGap" :min="32" :max="100"></el-slider>
+        <el-slider v-model="markedGap" :min="32" :max="100" @change="__marked"></el-slider>
       </div>
       <div class="block">
         <span class="demonstration">保存类型</span>
@@ -139,6 +139,9 @@ export default {
         this.__markWater();
       };
     },
+    __marked() {
+      this.__markWater();
+    },
     async __markWater() {
       try {
         // console.log("handle change", (new Date).toTimeString())
@@ -207,29 +210,7 @@ export default {
       }
     },
   },
-  watch: {
-    markedRotate: function () {
-      this.__markWater();
-    },
-    markedText: function () {
-      this.__markWater();
-    },
-    markedColor: function () {
-      this.__markWater();
-    },
-    markedSize: function () {
-      this.__markWater();
-    },
-    markedAlpha: function () {
-      this.__markWater();
-    },
-    markedFont: function () {
-      this.__markWater();
-    },
-    markedGap: function () {
-      this.__markWater();
-    },
-  },
+  watch: {},
   created() {
     this.__markWater();
   },

@@ -1,3 +1,3 @@
 module.exports = {
-  publicPath: "/watermark/"
+  publicPath: process.env.NODE_ENV === "production" ? "/watermark/" : "/"
 };
