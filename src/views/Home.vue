@@ -12,7 +12,11 @@
       />
     </div>
     <div class="text">
-      <el-input v-model="markedText" placeholder="请输入内容" @input="__marked"></el-input>
+      <el-input
+        v-model="markedText"
+        placeholder="请输入内容"
+        @input="__marked"
+      ></el-input>
     </div>
     <div class="fontstyle">
       <span>字体 / 颜色：</span>
@@ -24,7 +28,11 @@
           :value="item.markedFont"
         ></el-option>
       </el-select>
-      <el-color-picker v-model="markedColor" :predefine="predefineColors" @change="__marked"></el-color-picker>
+      <el-color-picker
+        v-model="markedColor"
+        :predefine="predefineColors"
+        @change="__marked"
+      ></el-color-picker>
     </div>
 
     <div class="other">
@@ -38,17 +46,32 @@
       </div>
       <div class="block">
         <span class="demonstration">角度</span>
-        <el-slider v-model="markedRotate" :min="0" :max="90" @change="__marked"></el-slider>
+        <el-slider
+          v-model="markedRotate"
+          :min="0"
+          :max="90"
+          @change="__marked"
+        ></el-slider>
       </div>
       <div class="block">
         <span class="demonstration">间隔</span>
-        <el-slider v-model="markedGap" :min="32" :max="100" @change="__marked"></el-slider>
+        <el-slider
+          v-model="markedGap"
+          :min="32"
+          :max="100"
+          @change="__marked"
+        ></el-slider>
       </div>
       <div class="block">
         <span class="demonstration">保存类型</span>
-        <div class="el-slider" style="text-align: left;">
+        <div class="el-slider" style="text-align: left">
           <el-select v-model="downloadExtType" placeholder="请选择">
-            <el-option v-for="item in downloadExtTypeList" :key="item" :label="item" :value="item"></el-option>
+            <el-option
+              v-for="item in downloadExtTypeList"
+              :key="item"
+              :label="item"
+              :value="item"
+            ></el-option>
           </el-select>
         </div>
       </div>
