@@ -20,7 +20,7 @@
     </div>
     <div class="fontstyle">
       <span>字体 / 颜色：</span>
-      <el-select v-model="markedFont" placeholder="请选择">
+      <el-select v-model="markedFont" @change="__marked" placeholder="请选择">
         <el-option
           v-for="item in options"
           :key="item.markedFont"
