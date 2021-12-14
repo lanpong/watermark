@@ -6,12 +6,12 @@
 
 ## 使用
 
-访问 [watermark](https://0x0ffff.github.io/watermark/) 即可使用。
+访问 [watermark](https://lanpong.github.io/watermark/) 即可使用。
 
 ## 构建
 
 ```shell
-git clone https://github.com/0x0ffff/watermark.git
+git clone https://github.com/lanpong/watermark.git
 
 cd watermark
 
