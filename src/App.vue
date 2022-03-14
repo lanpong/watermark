@@ -3,6 +3,8 @@ import defaultpng from "./assets/default.png";
 import Watermark from "watermarkjs";
 import download from "./utils/download";
 import { onMounted, reactive, ref } from "vue";
+import "element-plus/es/components/message/style/css";
+import { ElMessage } from "element-plus";
 
 const markedImg = ref(defaultpng);
 const orginImg = ref(defaultpng);
@@ -99,13 +101,17 @@ function __handleText(target) {
   return target;
 }
 
+const open = () => {
+  ElMessage("长按图片保存到手机相册！");
+};
+
 function __download() {
   const imgUrl = markedImg.value;
   const u = navigator.userAgent; // 获取浏览器的 userAgent
   const isIos = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); // Android设备
   const isAndroid = u.indexOf("Android") > -1 || u.indexOf("Adr") > -1; // ios设备
   if (isIos || isAndroid) {
-    Message.info("长按图片保存到手机相册！");
+    open();
     return false;
   } else if (window.navigator.msSaveOrOpenBlob) {
     let bstr = atob(imgUrl.split(",")[1]);
