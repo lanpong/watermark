@@ -9,13 +9,14 @@ import { ElMessage } from "element-plus";
 const markedImg = ref(defaultpng);
 const originImg = ref(defaultpng);
 
-const markedAlpha = ref(50);
-const markedColor = ref("#ffffff");
-const markedSize = ref(24);
-const markedText = ref("仅用于xxxxx使用");
-const markedRotate = ref(45);
-const markedGap = ref(32);
-const downloadExtType = ref("png");
+let markedAlpha = ref(50); // 透明度
+let markedColor = ref("#ffffff"); // 水印的颜色
+let markedCount = ref(50); // 水印的数量
+let markedSize = ref(24); // 字体大小
+let markedText = ref("仅用于xxxxx使用"); // 水印的文字
+let markedRotate = ref(45); // 角度
+let markedGap = ref(32); // 间隔
+let downloadExtType = ref("png"); // 保存类型
 const downloadExtTypeList = reactive(["png", "jpg"]);
 const predefineColors = reactive([
   "#000000",
@@ -48,8 +49,8 @@ const options = reactive([
     label: "黑体",
   },
 ]);
-const markedFont = ref("Arial");
-const fileInput = ref();
+let markedFont = ref("Arial"); // 水印字体
+const fileInput = ref(); // 需要添加水印的图片
 
 function onPickFile() {
   fileInput.value.click();
@@ -86,7 +87,7 @@ function __handleText(target) {
   let rotate = markedRotate.value;
   let fontStyle = markedFont.value;
   text = `${text}   `;
-  text = text.repeat(50);
+  text = text.repeat(markedCount.value);
   let x = 0;
   let y = target.height;
   // const gap = 32;
@@ -133,7 +134,50 @@ function __download() {
   }
 }
 
+// 将水印配置保存到 localStorage
+function __saveSettings() {
+  let settings = {
+    text: markedText.value,
+    font: markedFont.value,
+    color: markedColor.value,
+    count: markedCount.value,
+    alpha: markedAlpha.value,
+    size: markedSize.value,
+    rotate: markedRotate.value,
+    gap: markedGap.value,
+    downloadExtType: downloadExtType.value 
+  };
+
+  try {
+    window.localStorage.setItem('watermarkSettings', JSON.stringify(settings));
+  } catch(e) {
+    console.error('保存水印配置时报错', e);
+  };
+};
+
+// 从 localStorage 加载水印配置
+function __loadSettings() {
+  try {
+    let settings = JSON.parse(window.localStorage.getItem('watermarkSettings'));
+    // console.log('saved settings', settings);
+    if (settings) {
+      markedText = ref(settings.text);
+      markedFont = ref(settings.font);
+      markedColor = ref(settings.color);
+      markedCount = ref(settings.count);
+      markedAlpha = ref(settings.alpha);
+      markedSize = ref(settings.size);
+      markedRotate = ref(settings.rotate);
+      markedGap = ref(settings.gap);
+      downloadExtType = ref(settings.downloadExtType);
+    };
+  } catch(e) {
+    console.error('获取保存的配置时报错', e);
+  };
+};
+
 onMounted(() => {
+  __loadSettings();
   __markedWater();
 });
 </script>
@@ -157,6 +201,10 @@ onMounted(() => {
     </div>
 
     <div class="other">
+      <div class="block">
+        <span class="demonstration">水印数量</span>
+        <el-slider v-model="markedCount" :min="40" :max="600" @change="__marked"></el-slider>
+      </div>
       <div class="block">
         <span class="demonstration">透明度</span>
         <el-slider v-model="markedAlpha" @change="__marked"></el-slider>
@@ -184,6 +232,7 @@ onMounted(() => {
     </div>
     <div class="save">
       <!-- <el-button @click="__markWater">添加水印</el-button> -->
+      <el-button @click="__saveSettings">保存配置</el-button>
       <el-button @click="__download">保存图片</el-button>
     </div>
   </div>
