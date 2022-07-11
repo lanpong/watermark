@@ -7,7 +7,7 @@ import "element-plus/es/components/message/style/css";
 import { ElMessage } from "element-plus";
 
 const markedImg = ref(defaultpng);
-const orginImg = ref(defaultpng);
+const originImg = ref(defaultpng);
 
 const markedAlpha = ref(50);
 const markedColor = ref("#ffffff");
@@ -61,7 +61,7 @@ function handleImgChange(e) {
   reader.readAsDataURL(imgFile);
   reader.onload = (arg) => {
     markedImg.value = arg.target.result;
-    orginImg.value = arg.target.result;
+    originImg.value = arg.target.result;
     __markedWater();
   };
 }
@@ -72,7 +72,7 @@ function __marked() {
 
 async function __markedWater() {
   try {
-    const imgs = await Watermark([orginImg.value]).image(__handleText).render();
+    const imgs = await Watermark([originImg.value]).image(__handleText).render();
     markedImg.value = imgs[0].src;
   } catch (error) {
     throw new Error(error);
