@@ -7,6 +7,14 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lanpong/watermark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lanpong/watermark/issues"
+  },
+  "homepage": "https://github.com/lanpong/watermark#readme",
   "dependencies": {
     "element-plus": "^2.1.1",
     "vue": "^3.2.25",
