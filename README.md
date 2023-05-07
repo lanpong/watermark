@@ -2,7 +2,7 @@
 
 一个前端实现的证件水印程序。
 
-![image.png](https://i.loli.net/2020/08/21/8ryMwgKUCLsSxfE.png)
+![image.png](https://s2.loli.net/2023/05/07/iDwjnNXLWJk5K8A.png)
 
 ## 使用
 
