@@ -274,10 +274,13 @@ onMounted(() => {
     flex: 1;
     display: flex;
     align-items: center;
+    justify-content: center;
     border-right: 1px dashed #ccc;
     img {
-      width: 100%;
+      width: 90%;
+      height: 90%;
       display: block;
+      object-fit: contain;
     }
   }
   .tool {
@@ -343,7 +346,7 @@ onMounted(() => {
     overflow: hidden;
     .imgcontent {
       width: 100%;
-      height: max-content;
+      height: 60%;
       flex: 0;
       border-right: 0;
     }
