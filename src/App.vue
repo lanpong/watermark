@@ -146,23 +146,64 @@ function drawWatermarkText(target) {
   let text = markedText.value;
   let rotate = markedRotate.value;
   let fontStyle = markedFont.value;
-  text = `${text}   `;
-  text = text.repeat(markedCount.value);
-  let x = 0;
-  let y = target.height;
-  // const gap = 32;
+  
   context.globalAlpha = markedAlpha.value / 100;
   context.fillStyle = markedColor.value;
   context.font = `${size}px ${fontStyle}`;
-  context.rotate((rotate * Math.PI) / 180);
-  // 根据画布高度和间隔计算需要的行数
-  const rows = Math.min(
-    Math.ceil(target.height / (markedGap.value * WATERMARK_CONFIG.ROW_MULTIPLIER)) + 5,
-    WATERMARK_CONFIG.MAX_ROWS  );
+  
+  const gap = markedGap.value * WATERMARK_CONFIG.ROW_MULTIPLIER;
+  const rotateRad = (rotate * Math.PI) / 180;
+  
+  // 计算画布四个角的坐标
+  const corners = [
+    { x: 0, y: 0 },           // 左上
+    { x: target.width, y: 0 }, // 右上
+    { x: 0, y: target.height }, // 左下
+    { x: target.width, y: target.height } // 右下
+  ];
+  
+  // 计算旋转后四个角在旋转坐标系中的位置
+  const cos = Math.cos(-rotateRad); // 注意：逆向旋转
+  const sin = Math.sin(-rotateRad);
+  
+  const rotatedCorners = corners.map(corner => ({
+    x: corner.x * cos - corner.y * sin,
+    y: corner.x * sin + corner.y * cos
+  }));
+  
+  // 找出旋转后的边界框
+  const minX = Math.min(...rotatedCorners.map(c => c.x));
+  const maxX = Math.max(...rotatedCorners.map(c => c.x));
+  const minY = Math.min(...rotatedCorners.map(c => c.y));
+  const maxY = Math.max(...rotatedCorners.map(c => c.y));
+  
+  // 计算需要覆盖的宽度和高度
+  const coverWidth = maxX - minX;
+  const coverHeight = maxY - minY;
+  
+  // 测量单个水印文本的宽度
+  const singleTextWidth = context.measureText(text + '   ').width;
+  
+  // 计算需要重复的次数，添加额外的边距
+  const repeatCount = Math.ceil((coverWidth + Math.abs(minX) * 2) / singleTextWidth) + 5;
+  
+  // 生成足够长的水印文本
+  const watermarkText = (text + '   ').repeat(repeatCount);
+  
+  // 应用旋转
+  context.rotate(rotateRad);
+  
+  // 从边界框外部开始绘制，添加额外边距
+  const startX = minX - Math.abs(minX) * 0.5;
+  const startY = maxY + gap * 2;
+  
+  // 计算需要的行数，添加额外行确保完全覆盖
+  const rows = Math.ceil((coverHeight + gap * 4) / gap) + 10;
 
+  let y = startY;
   for (let i = 0; i < rows; i++) {
-    y = y - markedGap.value * WATERMARK_CONFIG.ROW_MULTIPLIER;
-    context.fillText(text, x, y);
+    y = y - gap;
+    context.fillText(watermarkText, startX, y);
   }
   return target;
 }
