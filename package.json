@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
   },
   "repository": {
     "type": "git",
@@ -22,6 +24,10 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-vue": "^9.32.0",
+    "prettier": "^3.4.2",
     "sass": "^1.94.2",
     "unplugin-auto-import": "^20.2.0",
     "unplugin-vue-components": "^30.0.0",

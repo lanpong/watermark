@@ -11,21 +11,21 @@
 
 export default function download(data, strFileName, strMimeType) {
   var self = window, // this script is only for browsers anyway...
-    defaultMime = "application/octet-stream", // this default mime also triggers iframe downloads
+    defaultMime = 'application/octet-stream', // this default mime also triggers iframe downloads
     mimeType = strMimeType || defaultMime,
     payload = data,
     url = !strFileName && !strMimeType && payload,
-    anchor = document.createElement("a"),
+    anchor = document.createElement('a'),
     toString = function (a) {
       return String(a);
     },
     myBlob = self.Blob || self.MozBlob || self.WebKitBlob || toString,
-    fileName = strFileName || "download",
+    fileName = strFileName || 'download',
     blob,
     reader;
   myBlob = myBlob.call ? myBlob.bind(self) : Blob;
 
-  if (String(this) === "true") {
+  if (String(this) === 'true') {
     //reverse arguments, allowing download.bind(true, "text/xml", "export.xml") to act as a callback
     payload = [payload, mimeType];
     mimeType = payload[0];
@@ -34,13 +34,13 @@ export default function download(data, strFileName, strMimeType) {
 
   if (url && url.length < 2048) {
     // if no filename and no mime, assume a url was passed as the only argument
-    fileName = url.split("/").pop().split("?")[0];
+    fileName = url.split('/').pop().split('?')[0];
     anchor.href = url; // assign href prop to temp anchor
     if (anchor.href.indexOf(url) !== -1) {
       // if the browser determines that it's a potentially valid url path:
       var ajax = new XMLHttpRequest();
-      ajax.open("GET", url, true);
-      ajax.responseType = "blob";
+      ajax.open('GET', url, true);
+      ajax.responseType = 'blob';
       ajax.onload = function (e) {
         download(e.target.response, fileName, defaultMime);
       };
@@ -63,15 +63,12 @@ export default function download(data, strFileName, strMimeType) {
     }
   } //end if dataURL passed?
 
-  blob =
-    payload instanceof myBlob
-      ? payload
-      : new myBlob([payload], { type: mimeType });
+  blob = payload instanceof myBlob ? payload : new myBlob([payload], { type: mimeType });
 
   function dataUrlToBlob(strUrl) {
     var parts = strUrl.split(/[:;,]/),
       type = parts[1],
-      decoder = parts[2] == "base64" ? atob : decodeURIComponent,
+      decoder = parts[2] == 'base64' ? atob : decodeURIComponent,
       binData = decoder(parts.pop()),
       mx = binData.length,
       i = 0,
@@ -83,13 +80,13 @@ export default function download(data, strFileName, strMimeType) {
   }
 
   function saver(url, winMode) {
-    if ("download" in anchor) {
+    if ('download' in anchor) {
       //html5 A[download]
       anchor.href = url;
-      anchor.setAttribute("download", fileName);
-      anchor.className = "download-js-link";
-      anchor.innerHTML = "downloading...";
-      anchor.style.display = "none";
+      anchor.setAttribute('download', fileName);
+      anchor.className = 'download-js-link';
+      anchor.innerHTML = 'downloading...';
+      anchor.style.display = 'none';
       document.body.appendChild(anchor);
       setTimeout(function () {
         anchor.click();
@@ -104,15 +101,13 @@ export default function download(data, strFileName, strMimeType) {
     }
 
     // handle non-a[download] safari as best we can:
-    if (
-      /(Version)\/(\d+)\.(\d+)(?:\.(\d+))?.*Safari\//.test(navigator.userAgent)
-    ) {
+    if (/(Version)\/(\d+)\.(\d+)(?:\.(\d+))?.*Safari\//.test(navigator.userAgent)) {
       url = url.replace(/^data:([\w\/\-\+]+)/, defaultMime);
       if (!window.open(url)) {
         // popup blocked, offer direct download:
         if (
           confirm(
-            "Displaying New Document\n\nUse Save As... to download, then click back to return to this page."
+            'Displaying New Document\n\nUse Save As... to download, then click back to return to this page.'
           )
         ) {
           location.href = url;
@@ -122,12 +117,12 @@ export default function download(data, strFileName, strMimeType) {
     }
 
     //do iframe dataURL download (old ch+FF):
-    var f = document.createElement("iframe");
+    var f = document.createElement('iframe');
     document.body.appendChild(f);
 
     if (!winMode) {
       // force a mime that will download:
-      url = "data:" + url.replace(/^data:([\w\/\-\+]+)/, defaultMime);
+      url = 'data:' + url.replace(/^data:([\w\/\-\+]+)/, defaultMime);
     }
     f.src = url;
     setTimeout(function () {
@@ -145,11 +140,11 @@ export default function download(data, strFileName, strMimeType) {
     saver(self.URL.createObjectURL(blob), true);
   } else {
     // handle non-Blob()+non-URL browsers:
-    if (typeof blob === "string" || blob.constructor === toString) {
+    if (typeof blob === 'string' || blob.constructor === toString) {
       try {
-        return saver("data:" + mimeType + ";base64," + self.btoa(blob));
+        return saver('data:' + mimeType + ';base64,' + self.btoa(blob));
       } catch (y) {
-        return saver("data:" + mimeType + "," + encodeURIComponent(blob));
+        return saver('data:' + mimeType + ',' + encodeURIComponent(blob));
       }
     }
 

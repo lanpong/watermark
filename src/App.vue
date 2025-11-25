@@ -1,60 +1,73 @@
 <script setup>
-import defaultpng from "./assets/default.png";
-import github from "./assets/github.svg";
-import Watermark from "watermarkjs";
-import download from "./utils/download";
-import { onMounted, reactive, ref } from "vue";
-import "element-plus/es/components/message/style/css";
-import { ElMessage } from "element-plus";
-import project from "../package.json";
+import defaultpng from './assets/default.png';
+import github from './assets/github.svg';
+import Watermark from 'watermarkjs';
+import download from './utils/download';
+import { onMounted, reactive, ref } from 'vue';
+import 'element-plus/es/components/message/style/css';
+import { ElMessage } from 'element-plus';
+import project from '../package.json';
 
 const version = project.version;
+
+// 水印配置常量
+const WATERMARK_CONFIG = {
+  DEFAULT_TEXT: '仅用于xxxxx使用',
+  DEFAULT_ALPHA: 50,
+  DEFAULT_COLOR: '#c3c3c3',
+  DEFAULT_SIZE: 24,
+  DEFAULT_ROTATE: 45,
+  DEFAULT_GAP: 32,
+  DEFAULT_COUNT: 50,
+  ROW_MULTIPLIER: 3,
+  MAX_ROWS: 200,
+};
 
 const markedImg = ref(defaultpng);
 const originImg = ref(defaultpng);
 
-let markedAlpha = ref(50); // 透明度
-let markedColor = ref("#c3c3c3"); // 水印的颜色
-let markedCount = ref(50); // 水印的数量
-let markedSize = ref(24); // 字体大小
-let markedText = ref("仅用于xxxxx使用"); // 水印的文字
-let markedRotate = ref(45); // 角度
-let markedGap = ref(32); // 间隔
-let downloadExtType = ref("png"); // 保存类型
-const downloadExtTypeList = reactive(["png", "jpg"]);
+const markedAlpha = ref(WATERMARK_CONFIG.DEFAULT_ALPHA);
+const markedColor = ref(WATERMARK_CONFIG.DEFAULT_COLOR);
+const markedCount = ref(WATERMARK_CONFIG.DEFAULT_COUNT);
+const markedSize = ref(WATERMARK_CONFIG.DEFAULT_SIZE);
+const markedText = ref(WATERMARK_CONFIG.DEFAULT_TEXT);
+const markedRotate = ref(WATERMARK_CONFIG.DEFAULT_ROTATE);
+const markedGap = ref(WATERMARK_CONFIG.DEFAULT_GAP);
+const downloadExtType = ref('png');
+const downloadExtTypeList = reactive(['png', 'jpg']);
 const predefineColors = reactive([
-  "#000000",
-  "#ffffff",
-  "#c3c3c3",
-  "#ff4500",
-  "#ff8c00",
-  "#ffd700",
-  "#1e90ff",
-  "#c71585",
+  '#000000',
+  '#ffffff',
+  '#c3c3c3',
+  '#ff4500',
+  '#ff8c00',
+  '#ffd700',
+  '#1e90ff',
+  '#c71585',
 ]);
 const options = reactive([
   {
-    markedFont: "Arial",
-    label: "默认",
+    markedFont: 'Arial',
+    label: '默认',
   },
   {
-    markedFont: "仿宋",
-    label: "仿宋",
+    markedFont: '仿宋',
+    label: '仿宋',
   },
   {
-    markedFont: "楷体",
-    label: "楷体",
+    markedFont: '楷体',
+    label: '楷体',
   },
   {
-    markedFont: "宋体",
-    label: "宋体",
+    markedFont: '宋体',
+    label: '宋体',
   },
   {
-    markedFont: "黑体",
-    label: "黑体",
+    markedFont: '黑体',
+    label: '黑体',
   },
 ]);
-let markedFont = ref("Arial"); // 水印字体
+let markedFont = ref('Arial'); // 水印字体
 const fileInput = ref(); // 需要添加水印的图片
 
 function onGithub() {
@@ -72,25 +85,26 @@ function handleImgChange(e) {
   reader.onload = (arg) => {
     markedImg.value = arg.target.result;
     originImg.value = arg.target.result;
-    __markedWater();
+    renderWatermark();
   };
 }
 
-function __marked() {
-  __markedWater();
+function applyWatermark() {
+  renderWatermark();
 }
 
-async function __markedWater() {
+async function renderWatermark() {
   try {
-    const imgs = await Watermark([originImg.value]).image(__handleText).render();
+    const imgs = await Watermark([originImg.value]).image(drawWatermarkText).render();
     markedImg.value = imgs[0].src;
   } catch (error) {
-    throw new Error(error);
+    console.error('水印渲染失败:', error);
+    ElMessage.error('水印添加失败，请重试');
   }
 }
 
-function __handleText(target) {
-  let context = target.getContext("2d");
+function drawWatermarkText(target) {
+  let context = target.getContext('2d');
   let size = markedSize.value;
   let text = markedText.value;
   let rotate = markedRotate.value;
@@ -104,34 +118,40 @@ function __handleText(target) {
   context.fillStyle = markedColor.value;
   context.font = `${size}px ${fontStyle}`;
   context.rotate((rotate * Math.PI) / 180);
-  for (let i = 0; i < 200; i++) {
-    y = y - markedGap.value * 3;
+  // 根据画布高度和间隔计算需要的行数
+  const rows = Math.min(
+    Math.ceil(target.height / (markedGap.value * WATERMARK_CONFIG.ROW_MULTIPLIER)) + 5,
+    WATERMARK_CONFIG.MAX_ROWS
+  );
+
+  for (let i = 0; i < rows; i++) {
+    y = y - markedGap.value * WATERMARK_CONFIG.ROW_MULTIPLIER;
     context.fillText(text, x, y);
   }
   return target;
 }
 
 const open = () => {
-  ElMessage("长按图片保存到手机相册！");
+  ElMessage('长按图片保存到手机相册！');
 };
 
-function __download() {
+function downloadImage() {
   const imgUrl = markedImg.value;
   const u = navigator.userAgent; // 获取浏览器的 userAgent
   const isIos = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); // Android设备
-  const isAndroid = u.indexOf("Android") > -1 || u.indexOf("Adr") > -1; // ios设备
+  const isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; // ios设备
   if (isIos || isAndroid) {
     open();
     return false;
   } else if (window.navigator.msSaveOrOpenBlob) {
-    let bstr = atob(imgUrl.split(",")[1]);
+    let bstr = atob(imgUrl.split(',')[1]);
     let n = bstr.length;
     let u8arr = new Uint8Array(n);
     while (n--) {
       u8arr[n] = bstr.charCodeAt(n);
     }
     let blob = new Blob([u8arr]);
-    const saveFileName = "download" + "." + "jpg";
+    const saveFileName = 'download' + '.' + 'jpg';
     window.navigator.msSaveOrOpenBlob(blob, saveFileName);
   } else {
     try {
@@ -143,51 +163,9 @@ function __download() {
   }
 }
 
-// 将水印配置保存到 localStorage
-function __saveSettings() {
-  let settings = {
-    text: markedText.value,
-    font: markedFont.value,
-    color: markedColor.value,
-    count: markedCount.value,
-    alpha: markedAlpha.value,
-    size: markedSize.value,
-    rotate: markedRotate.value,
-    gap: markedGap.value,
-    downloadExtType: downloadExtType.value 
-  };
-
-  try {
-    window.localStorage.setItem('watermarkSettings', JSON.stringify(settings));
-  } catch(e) {
-    console.error('保存水印配置时报错', e);
-  };
-};
-
-// 从 localStorage 加载水印配置
-function __loadSettings() {
-  try {
-    let settings = JSON.parse(window.localStorage.getItem('watermarkSettings'));
-    // console.log('saved settings', settings);
-    if (settings) {
-      markedText = ref(settings.text);
-      markedFont = ref(settings.font);
-      markedColor = ref(settings.color);
-      markedCount = ref(settings.count);
-      markedAlpha = ref(settings.alpha);
-      markedSize = ref(settings.size);
-      markedRotate = ref(settings.rotate);
-      markedGap = ref(settings.gap);
-      downloadExtType = ref(settings.downloadExtType);
-    };
-  } catch(e) {
-    console.error('获取保存的配置时报错', e);
-  };
-};
 
 onMounted(() => {
-  __loadSettings();
-  __markedWater();
+  renderWatermark();
 });
 </script>
 
@@ -197,65 +175,112 @@ onMounted(() => {
     <div class="imgcontent">
       <img :src="markedImg" @click="onPickFile" />
       <el-button type="primary" v-if="!markedImg" @click="onPickFile">选择图片</el-button>
-      <input type="file" ref="fileInput" accept="image/*" @change="handleImgChange" style="display: none" />
+      <input
+        type="file"
+        ref="fileInput"
+        accept="image/*"
+        @change="handleImgChange"
+        style="display: none"
+      />
     </div>
     <!-- 工具箱 -->
     <div class="tool">
-      <img class="github" :src="github" alt="github/Chef5" @click="onGithub">
-      <h2>证件水印 <span>v{{ version }}</span></h2>
+      <img class="github" :src="github" alt="github/Chef5" @click="onGithub" />
+      <h2>
+        证件水印 <span>v{{ version }}</span>
+      </h2>
       <div class="tool-item">
         <span class="item-label">图片</span>
-        <el-button plain type="primary" @click="onPickFile">{{ markedImg ? '更换图片' : '选择图片' }}</el-button>
+        <el-button plain type="primary" @click="onPickFile">{{
+          markedImg ? '更换图片' : '选择图片'
+        }}</el-button>
       </div>
       <div class="tool-item">
         <span class="item-label">水印内容</span>
-        <el-input type="textarea" class="item-value" v-model="markedText" placeholder="请输入内容" @input="__marked"></el-input>
+        <el-input
+          type="textarea"
+          class="item-value"
+          v-model="markedText"
+          placeholder="请输入内容"
+          @input="applyWatermark"
+        ></el-input>
       </div>
       <div class="tool-item">
         <span class="item-label">字体</span>
         <div class="item-value">
-          <el-select v-model="markedFont" @change="__marked" placeholder="请选择">
-            <el-option v-for="item in options" :key="item.markedFont" :label="item.label" :value="item.markedFont"></el-option>
+          <el-select v-model="markedFont" @change="applyWatermark" placeholder="请选择">
+            <el-option
+              v-for="item in options"
+              :key="item.markedFont"
+              :label="item.label"
+              :value="item.markedFont"
+            ></el-option>
           </el-select>
         </div>
       </div>
       <div class="tool-item">
         <span class="item-label">颜色</span>
-        <el-color-picker class="item-value" v-model="markedColor" :predefine="predefineColors" @change="__marked"></el-color-picker>
+        <el-color-picker
+          class="item-value"
+          v-model="markedColor"
+          :predefine="predefineColors"
+          @change="applyWatermark"
+        ></el-color-picker>
       </div>
       <div class="tool-item">
         <span class="item-label">水印数量</span>
-        <el-slider class="item-value" v-model="markedCount" :min="40" :max="600" @change="__marked"></el-slider>
+        <el-slider
+          class="item-value"
+          v-model="markedCount"
+          :min="40"
+          :max="600"
+          @change="applyWatermark"
+        ></el-slider>
       </div>
       <div class="tool-item">
         <span class="item-label">透明度</span>
-        <el-slider class="item-value" v-model="markedAlpha" @change="__marked"></el-slider>
+        <el-slider class="item-value" v-model="markedAlpha" @change="applyWatermark"></el-slider>
       </div>
       <div class="tool-item">
         <span class="item-label">字体大小</span>
-        <el-slider class="item-value" v-model="markedSize" @change="__marked"></el-slider>
+        <el-slider class="item-value" v-model="markedSize" @change="applyWatermark"></el-slider>
       </div>
       <div class="tool-item">
         <span class="item-label">角度</span>
-        <el-slider class="item-value" v-model="markedRotate" :min="0" :max="90" @change="__marked"></el-slider>
+        <el-slider
+          class="item-value"
+          v-model="markedRotate"
+          :min="0"
+          :max="90"
+          @change="applyWatermark"
+        ></el-slider>
       </div>
       <div class="tool-item">
         <span class="item-label">间隔</span>
-        <el-slider class="item-value" v-model="markedGap" :min="32" :max="100" @change="__marked"></el-slider>
+        <el-slider
+          class="item-value"
+          v-model="markedGap"
+          :min="32"
+          :max="100"
+          @change="applyWatermark"
+        ></el-slider>
       </div>
       <div class="tool-item">
         <span class="item-label">保存类型</span>
         <div class="item-value">
           <el-select v-model="downloadExtType" placeholder="请选择">
-            <el-option v-for="item in downloadExtTypeList" :key="item" :label="item" :value="item"></el-option>
+            <el-option
+              v-for="item in downloadExtTypeList"
+              :key="item"
+              :label="item"
+              :value="item"
+            ></el-option>
           </el-select>
         </div>
       </div>
 
       <div class="save">
-        <!-- <el-button @click="__markWater">添加水印</el-button> -->
-        <el-button @click="__saveSettings">保存配置</el-button>
-        <el-button type="primary" @click="__download">保存图片</el-button>
+        <el-button type="primary" @click="downloadImage">保存图片</el-button>
       </div>
     </div>
   </div>
@@ -361,7 +386,7 @@ onMounted(() => {
 
 <style>
 #app {
-  font-family: "Avenir", Helvetica, Arial, sans-serif;
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
