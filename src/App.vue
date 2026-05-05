@@ -198,25 +198,16 @@ function drawWatermarkText(target) {
   return target;
 }
 
-function downloadImage() {
+async function downloadImage() {
   const imgUrl = markedImg.value;
-  const userAgent = navigator.userAgent;
-  const isMobile =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      userAgent
-    );
-
-  if (isMobile) {
-    ElMessage('长按图片保存到手机相册！');
-    return;
-  }
 
   try {
     const type = downloadExtType.value;
     const fileName = `${WATERMARK_CONFIG.DEFAULT_DOWNLOAD_FILENAME}.${type}`;
-    download(imgUrl, fileName);
+    await download(imgUrl, fileName);
     ElMessage.success('图片保存成功');
   } catch (error) {
+    if (error.name === 'AbortError') return;
     console.error('图片下载失败:', error);
     ElMessage.error('图片保存失败，请重试');
   }
