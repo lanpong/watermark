@@ -7,14 +7,19 @@ export default [
   ...pluginVue.configs['flat/recommended'],
   prettierConfig,
   {
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+      },
+    },
     rules: {
       'vue/multi-word-component-names': 'off',
       'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
       'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-      'vue/no-unused-vars': 'warn'
-    }
+      'vue/no-unused-vars': 'warn',
+    },
   },
   {
-    ignores: ['dist/**', 'node_modules/**']
-  }
+    ignores: ['dist/**', 'node_modules/**'],
+  },
 ];

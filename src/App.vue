@@ -3,15 +3,17 @@ import defaultpng from './assets/default.png';
 import github from './assets/github.svg';
 import Watermark from 'watermarkjs';
 import download from './utils/download';
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref } from 'vue';
 import 'element-plus/es/components/message/style/css';
 import { ElMessage } from 'element-plus';
 import project from '../package.json';
-import { WATERMARK_CONFIG } from './constants.js';
+import {
+  WATERMARK_CONFIG,
+  FONT_OPTIONS,
+  PREDEFINE_COLORS,
+} from './constants.js';
 
 const version = project.version;
-
-
 
 const markedImg = ref(defaultpng);
 const originImg = ref(defaultpng);
@@ -24,84 +26,71 @@ const markedText = ref(WATERMARK_CONFIG.DEFAULT_TEXT);
 const markedRotate = ref(WATERMARK_CONFIG.DEFAULT_ROTATE);
 const markedGap = ref(WATERMARK_CONFIG.DEFAULT_GAP);
 const downloadExtType = ref('png');
-const downloadExtTypeList = reactive(['png', 'jpg']);
-const predefineColors = reactive([
-  '#000000',
-  '#ffffff',
-  '#c3c3c3',
-  '#ff4500',
-  '#ff8c00',
-  '#ffd700',
-  '#1e90ff',
-  '#c71585',
-]);
-const options = reactive([
-  {
-    markedFont: 'Arial',
-    label: '默认',
-  },
-  {
-    markedFont: '仿宋',
-    label: '仿宋',
-  },
-  {
-    markedFont: '楷体',
-    label: '楷体',
-  },
-  {
-    markedFont: '宋体',
-    label: '宋体',
-  },
-  {
-    markedFont: '黑体',
-    label: '黑体',
-  },
-]);
-let markedFont = ref('Arial'); // 水印字体
-const fileInput = ref(); // 需要添加水印的图片
+const downloadExtTypeList = ['png', 'jpg'];
+const markedFont = ref('Arial');
+const fileInput = ref();
 
-function onGithub() {
-  window.open(project.homepage, '_blank');
+let lastParams = null;
+let originImageObj = null;
+let objectUrl = null;
+let debounceTimer = null;
+
+function debounce(func, delay) {
+  return function (...args) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => func.apply(this, args), delay);
+  };
 }
+
+const renderWatermarkDebounced = debounce(
+  renderWatermark,
+  WATERMARK_CONFIG.DEBOUNCE_DELAY_MS
+);
 
 function onPickFile() {
   fileInput.value.click();
 }
 
-async function handleImgChange(e) {
+function handleImgChange(e) {
   const imgFile = e.target.files[0];
   if (!imgFile) return;
 
-  const reader = new FileReader();
-  reader.readAsDataURL(imgFile);
-  reader.onload = async (arg) => {
-    originImg.value = arg.target.result;
-    originImageObj = null; // Reset original image object
-    await renderWatermark();
-  };
-}
+  if (!imgFile.type.startsWith('image/')) {
+    ElMessage.error('请选择图片文件');
+    return;
+  }
 
-// Debounce function
-function debounce(func, delay) {
-  let timeout;
-  return function(...args) {
-    const context = this;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(context, args), delay);
-  };
-}
+  if (imgFile.size > WATERMARK_CONFIG.MAX_FILE_SIZE_MB * 1024 * 1024) {
+    ElMessage.error(`图片大小不能超过 ${WATERMARK_CONFIG.MAX_FILE_SIZE_MB}MB`);
+    return;
+  }
 
-function applyWatermark() {
+  if (objectUrl) {
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  objectUrl = URL.createObjectURL(imgFile);
+  originImg.value = objectUrl;
+  originImageObj = null;
   renderWatermark();
 }
 
-const applyWatermarkDebounced = debounce(applyWatermark, 300); // Debounce for sliders and input
-
-let lastParams = null;
-let originImageObj = null;
+function hasParamsChanged(current) {
+  if (!lastParams) return true;
+  return (
+    current.text !== lastParams.text ||
+    current.color !== lastParams.color ||
+    current.alpha !== lastParams.alpha ||
+    current.size !== lastParams.size ||
+    current.rotate !== lastParams.rotate ||
+    current.gap !== lastParams.gap ||
+    current.count !== lastParams.count ||
+    current.font !== lastParams.font ||
+    current.src !== lastParams.src
+  );
+}
 
 async function renderWatermark() {
-  // Debounce already handled in applyWatermarkDebounced
   const currentParams = {
     text: markedText.value,
     color: markedColor.value,
@@ -113,92 +102,93 @@ async function renderWatermark() {
     font: markedFont.value,
     src: originImg.value,
   };
-  if (JSON.stringify(currentParams) === JSON.stringify(lastParams)) {
-    return; // No changes, skip rendering
-  }
+
+  if (!hasParamsChanged(currentParams)) return;
   lastParams = currentParams;
 
-  // Lazy load original image object
-  if (!originImageObj || originImageObj.src !== originImg.value) {
+  if (!originImageObj || originImageObj._src !== originImg.value) {
     originImageObj = new Image();
+    originImageObj._src = originImg.value;
     originImageObj.src = originImg.value;
-    await new Promise((resolve, reject) => {
-      originImageObj.onload = resolve;
-      originImageObj.onerror = reject;
-    });
+    try {
+      await new Promise((resolve, reject) => {
+        originImageObj.onload = resolve;
+        originImageObj.onerror = reject;
+      });
+    } catch {
+      ElMessage.error('图片加载失败');
+      return;
+    }
   }
 
-  requestAnimationFrame(async () => {
-    try {
-      const imgs = await Watermark([originImageObj]).image(drawWatermarkText).render();
-      markedImg.value = imgs[0].src;
-    } catch (error) {
-      console.error('水印渲染失败:', error);
-      ElMessage.error('水印添加失败，请重试');
-      markedImg.value = originImg.value;
-    }
-  });
+  try {
+    const imgs = await Watermark([originImageObj])
+      .image(drawWatermarkText)
+      .render();
+    markedImg.value = imgs[0].src;
+  } catch (error) {
+    console.error('水印渲染失败:', error);
+    ElMessage.error('水印添加失败，请重试');
+    markedImg.value = originImg.value;
+  }
 }
 
 function drawWatermarkText(target) {
-  let context = target.getContext('2d');
-  let size = markedSize.value;
-  let text = markedText.value;
-  let rotate = markedRotate.value;
-  let fontStyle = markedFont.value;
-  
+  const context = target.getContext('2d');
+  const size = markedSize.value;
+  const text = markedText.value;
+  const rotate = markedRotate.value;
+  const fontStyle = markedFont.value;
+  const count = markedCount.value;
+
   context.globalAlpha = markedAlpha.value / 100;
   context.fillStyle = markedColor.value;
   context.font = `${size}px ${fontStyle}`;
-  
+
   const gap = markedGap.value * WATERMARK_CONFIG.ROW_MULTIPLIER;
   const rotateRad = (rotate * Math.PI) / 180;
-  
-  // 计算画布四个角的坐标
+  const countMultiplier = count / WATERMARK_CONFIG.DEFAULT_COUNT;
+
   const corners = [
-    { x: 0, y: 0 },           // 左上
-    { x: target.width, y: 0 }, // 右上
-    { x: 0, y: target.height }, // 左下
-    { x: target.width, y: target.height } // 右下
+    { x: 0, y: 0 },
+    { x: target.width, y: 0 },
+    { x: 0, y: target.height },
+    { x: target.width, y: target.height },
   ];
-  
-  // 计算旋转后四个角在旋转坐标系中的位置
-  const cos = Math.cos(-rotateRad); // 注意：逆向旋转
+
+  const cos = Math.cos(-rotateRad);
   const sin = Math.sin(-rotateRad);
-  
-  const rotatedCorners = corners.map(corner => ({
+
+  const rotatedCorners = corners.map((corner) => ({
     x: corner.x * cos - corner.y * sin,
-    y: corner.x * sin + corner.y * cos
+    y: corner.x * sin + corner.y * cos,
   }));
-  
-  // 找出旋转后的边界框
-  const minX = Math.min(...rotatedCorners.map(c => c.x));
-  const maxX = Math.max(...rotatedCorners.map(c => c.x));
-  const minY = Math.min(...rotatedCorners.map(c => c.y));
-  const maxY = Math.max(...rotatedCorners.map(c => c.y));
-  
-  // 计算需要覆盖的宽度和高度
+
+  const minX = Math.min(...rotatedCorners.map((c) => c.x));
+  const maxX = Math.max(...rotatedCorners.map((c) => c.x));
+  const minY = Math.min(...rotatedCorners.map((c) => c.y));
+  const maxY = Math.max(...rotatedCorners.map((c) => c.y));
+
   const coverWidth = maxX - minX;
   const coverHeight = maxY - minY;
-  
-  // 测量单个水印文本的宽度
-  const singleTextWidth = context.measureText(text + '   ').width;
-  
-  // 计算需要重复的次数，添加额外的边距
-  const repeatCount = Math.ceil((coverWidth + Math.abs(minX) * 2) / singleTextWidth) + 5;
-  
-  // 生成足够长的水印文本
-  const watermarkText = (text + '   ').repeat(repeatCount);
-  
-  // 应用旋转
+
+  const separator = WATERMARK_CONFIG.TEXT_SEPARATOR;
+  const singleTextWidth = context.measureText(text + separator).width;
+
+  const repeatCount =
+    Math.ceil((coverWidth + Math.abs(minX) * 2) / singleTextWidth) +
+    WATERMARK_CONFIG.EXTRA_COLUMNS;
+
+  const watermarkText = (text + separator).repeat(repeatCount);
+
   context.rotate(rotateRad);
-  
-  // 从边界框外部开始绘制，添加额外边距
+
   const startX = minX - Math.abs(minX) * 0.5;
   const startY = maxY + gap * 2;
-  
-  // 计算需要的行数，添加额外行确保完全覆盖
-  const rows = Math.ceil((coverHeight + gap * 4) / gap) + 10;
+
+  const rows =
+    Math.ceil(((coverHeight + gap * 4) / gap) * countMultiplier) +
+    WATERMARK_CONFIG.EXTRA_ROWS;
 
   let y = startY;
   for (let i = 0; i < rows; i++) {
@@ -208,37 +198,23 @@ function drawWatermarkText(target) {
   return target;
 }
 
-const showMobileSaveHint = () => {
-  ElMessage('长按图片保存到手机相册！');
-};
-
 function downloadImage() {
   const imgUrl = markedImg.value;
   const userAgent = navigator.userAgent;
-  const isIos = !!userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
-  const isAndroid = userAgent.indexOf('Android') > -1 || userAgent.indexOf('Adr') > -1;
-  
-  if (isIos || isAndroid) {
-    showMobileSaveHint();
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      userAgent
+    );
+
+  if (isMobile) {
+    ElMessage('长按图片保存到手机相册！');
     return;
   }
-  
-  if (window.navigator.msSaveOrOpenBlob) {
-    const bstr = atob(imgUrl.split(',')[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    const blob = new Blob([u8arr]);
-    const saveFileName = `download.${downloadExtType.value}`;
-    window.navigator.msSaveOrOpenBlob(blob, saveFileName);
-    return;
-  }
-  
+
   try {
     const type = downloadExtType.value;
-    download(imgUrl, `download.${type}`, `image/${type}`);
+    const fileName = `${WATERMARK_CONFIG.DEFAULT_DOWNLOAD_FILENAME}.${type}`;
+    download(imgUrl, fileName);
     ElMessage.success('图片保存成功');
   } catch (error) {
     console.error('图片下载失败:', error);
@@ -246,54 +222,75 @@ function downloadImage() {
   }
 }
 
-
 onMounted(() => {
   renderWatermark();
+});
+
+onBeforeUnmount(() => {
+  clearTimeout(debounceTimer);
+  if (objectUrl) {
+    URL.revokeObjectURL(objectUrl);
+  }
 });
 </script>
 
 <template>
   <div class="home">
-    <!-- 图片 -->
     <div class="imgcontent">
-      <img :src="markedImg" @click="onPickFile" />
-      <el-button type="primary" v-if="!markedImg" @click="onPickFile">选择图片</el-button>
+      <img
+        :src="markedImg"
+        alt="带水印的图片预览"
+        @click="onPickFile"
+      />
       <input
-        type="file"
         ref="fileInput"
+        type="file"
         accept="image/*"
-        @change="handleImgChange"
+        aria-label="上传图片"
         style="display: none"
+        @change="handleImgChange"
       />
     </div>
-    <!-- 工具箱 -->
     <div class="tool">
-      <img class="github" :src="github" alt="github/Chef5" @click="onGithub" />
+      <a
+        :href="project.homepage"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="在 GitHub 上查看项目"
+      >
+        <img class="github" :src="github" alt="GitHub" />
+      </a>
       <h2>
         证件水印 <span>v{{ version }}</span>
       </h2>
       <div class="tool-item">
-        <span class="item-label">图片</span>
-        <el-button plain type="primary" @click="onPickFile">{{
-          markedImg ? '更换图片' : '选择图片'
-        }}</el-button>
+        <label class="item-label">图片</label>
+        <el-button plain type="primary" @click="onPickFile">
+          更换图片
+        </el-button>
       </div>
       <div class="tool-item">
-        <span class="item-label">水印内容</span>
+        <label class="item-label" for="watermark-text">水印内容</label>
         <el-input
+          id="watermark-text"
+          v-model="markedText"
           type="textarea"
           class="item-value"
-          v-model="markedText"
           placeholder="请输入内容"
-          @input="applyWatermarkDebounced"
+          @input="renderWatermarkDebounced"
         ></el-input>
       </div>
       <div class="tool-item">
-        <span class="item-label">字体</span>
+        <label class="item-label" for="watermark-font">字体</label>
         <div class="item-value">
-          <el-select v-model="markedFont" @change="applyWatermarkDebounced" placeholder="请选择">
+          <el-select
+            id="watermark-font"
+            v-model="markedFont"
+            placeholder="请选择"
+            @change="renderWatermarkDebounced"
+          >
             <el-option
-              v-for="item in options"
+              v-for="item in FONT_OPTIONS"
               :key="item.markedFont"
               :label="item.label"
               :value="item.markedFont"
@@ -302,56 +299,72 @@ onMounted(() => {
         </div>
       </div>
       <div class="tool-item">
-        <span class="item-label">颜色</span>
+        <label class="item-label">颜色</label>
         <el-color-picker
-          class="item-value"
           v-model="markedColor"
-          :predefine="predefineColors"
-          @change="applyWatermark"
+          class="item-value"
+          :predefine="PREDEFINE_COLORS"
+          @change="renderWatermark"
         ></el-color-picker>
       </div>
       <div class="tool-item">
-        <span class="item-label">水印数量</span>
+        <label class="item-label">水印数量</label>
         <el-slider
-          class="item-value"
           v-model="markedCount"
-          :min="40"
-          :max="600"
-          @change="applyWatermark"
+          class="item-value"
+          :min="WATERMARK_CONFIG.COUNT_MIN"
+          :max="WATERMARK_CONFIG.COUNT_MAX"
+          @input="renderWatermarkDebounced"
         ></el-slider>
       </div>
       <div class="tool-item">
-        <span class="item-label">透明度</span>
-        <el-slider class="item-value" v-model="markedAlpha" @change="applyWatermarkDebounced"></el-slider>
-      </div>
-      <div class="tool-item">
-        <span class="item-label">字体大小</span>
-        <el-slider class="item-value" v-model="markedSize" @change="applyWatermarkDebounced"></el-slider>
-      </div>
-      <div class="tool-item">
-        <span class="item-label">角度</span>
+        <label class="item-label">透明度</label>
         <el-slider
+          v-model="markedAlpha"
           class="item-value"
+          :min="WATERMARK_CONFIG.ALPHA_MIN"
+          :max="WATERMARK_CONFIG.ALPHA_MAX"
+          @input="renderWatermarkDebounced"
+        ></el-slider>
+      </div>
+      <div class="tool-item">
+        <label class="item-label">字体大小</label>
+        <el-slider
+          v-model="markedSize"
+          class="item-value"
+          :min="WATERMARK_CONFIG.SIZE_MIN"
+          :max="WATERMARK_CONFIG.SIZE_MAX"
+          @input="renderWatermarkDebounced"
+        ></el-slider>
+      </div>
+      <div class="tool-item">
+        <label class="item-label">角度</label>
+        <el-slider
           v-model="markedRotate"
-          :min="0"
-          :max="90"
-          @change="applyWatermark"
-        ></el-slider>
-      </div>
-      <div class="tool-item">
-        <span class="item-label">间隔</span>
-        <el-slider
           class="item-value"
-          v-model="markedGap"
-          :min="32"
-          :max="100"
-          @change="applyWatermark"
+          :min="WATERMARK_CONFIG.ROTATE_MIN"
+          :max="WATERMARK_CONFIG.ROTATE_MAX"
+          @input="renderWatermarkDebounced"
         ></el-slider>
       </div>
       <div class="tool-item">
-        <span class="item-label">保存类型</span>
+        <label class="item-label">间隔</label>
+        <el-slider
+          v-model="markedGap"
+          class="item-value"
+          :min="WATERMARK_CONFIG.GAP_MIN"
+          :max="WATERMARK_CONFIG.GAP_MAX"
+          @input="renderWatermarkDebounced"
+        ></el-slider>
+      </div>
+      <div class="tool-item">
+        <label class="item-label" for="download-type">保存类型</label>
         <div class="item-value">
-          <el-select v-model="downloadExtType" placeholder="请选择">
+          <el-select
+            id="download-type"
+            v-model="downloadExtType"
+            placeholder="请选择"
+          >
             <el-option
               v-for="item in downloadExtTypeList"
               :key="item"
@@ -370,6 +383,8 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+$mobile-breakpoint: 750px;
+
 .home {
   width: 100%;
   height: 100%;
@@ -389,6 +404,7 @@ onMounted(() => {
       height: 90%;
       display: block;
       object-fit: contain;
+      cursor: pointer;
     }
   }
   .tool {
@@ -430,11 +446,14 @@ onMounted(() => {
       margin: 0 10px;
     }
     .github {
+      width: 30px;
+      height: 30px;
+    }
+    a {
       position: absolute;
       right: 10px;
       top: 10px;
-      width: 30px;
-      height: 30px;
+      display: flex;
     }
     h2 {
       span {
@@ -447,7 +466,7 @@ onMounted(() => {
     }
   }
 }
-@media screen and (max-width: 750px) {
+@media screen and (max-width: $mobile-breakpoint) {
   .home {
     height: 100%;
     flex-direction: column;
@@ -457,11 +476,15 @@ onMounted(() => {
       height: 60%;
       flex: 0;
       border-right: 0;
+      img {
+        cursor: default;
+      }
     }
     .tool {
       width: 100%;
       flex: 1;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 }
