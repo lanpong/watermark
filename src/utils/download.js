@@ -1,5 +1,7 @@
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 export default async function download(dataUrl, fileName) {
-  if (navigator.share && navigator.canShare) {
+  if (isMobile && navigator.share && navigator.canShare) {
     try {
       const res = await fetch(dataUrl);
       const blob = await res.blob();
